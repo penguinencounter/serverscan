@@ -1,2 +1,8 @@
 export PYTHONPATH=".:quarry:$PYTHONPATH"
-python3 "$@"
+
+if [ $# -eq 0 ]; then
+    echo "No args, running default"
+    python3 go.py -p 25606 51.68.204.29
+else
+    python3 "$@"
+fi

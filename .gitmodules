@@ -1,0 +1,3 @@
+[submodule "quarry"]
+	path = quarry
+	url = git@github.com:penguinencounter/quarry.git

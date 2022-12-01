@@ -105,16 +105,16 @@ class FactoryO(ClientFactory):
 
 @defer.inlineCallbacks
 def go(args):
-    print('\rStarting: logging in...'.ljust(75), end='', flush=True)
+    print('\rStarting: logging in...'.ljust(50), end='', flush=True)
     login_token, uuid, name = login()
-    print(f'\rtoken = {login_token[:10]}...'.ljust(75), end='', flush=True)
-    print('\rStarting: building profile...'.ljust(75), end='', flush=True)
+    print(f'\rtoken = {login_token[:10]}...'.ljust(50), end='', flush=True)
+    print('\rStarting: building profile...'.ljust(50), end='', flush=True)
     profile: Profile = yield Profile("foo", login_token, name, UUID.from_hex(uuid))
-    print('\rStarting: retreving certs...'.ljust(75), end='', flush=True)
+    print('\rStarting: retreving certs...'.ljust(50), end='', flush=True)
     yield profile.use_signing()
-    print('\rStarting: starting...'.ljust(75), end='', flush=True)
+    print('\rStarting: starting...'.ljust(50), end='', flush=True)
     factory = FactoryO(profile)
-    print('\rConnecting...'.ljust(75), flush=True)
+    print('\rConnecting...'.ljust(50), flush=True)
     factory.connect(args.host, args.port)
 
 

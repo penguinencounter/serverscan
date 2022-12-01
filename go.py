@@ -103,18 +103,28 @@ class FactoryO(ClientFactory):
     protocol = ProtocolO
 
 
+def poggers_bar(pct, width):
+    b = '['
+    width -= 2
+    char = int(width * pct)
+    fill = width - char
+    b += '='*char
+    b += ' '*fill
+    b += ']'
+    return b
+
+
 @defer.inlineCallbacks
 def go(args):
-    print('\rStarting: logging in...'.ljust(50), end='', flush=True)
+    print('\rLogging in...'.ljust(20) + poggers_bar(.2, 30), end='', flush=True)
     login_token, uuid, name = login()
-    print(f'\rtoken = {login_token[:10]}...'.ljust(50), end='', flush=True)
-    print('\rStarting: building profile...'.ljust(50), end='', flush=True)
+    print('\rBuilding profile...'.ljust(20) + poggers_bar(.4, 30), end='', flush=True)
     profile: Profile = yield Profile("foo", login_token, name, UUID.from_hex(uuid))
-    print('\rStarting: retreving certs...'.ljust(50), end='', flush=True)
+    print('\rRetreving certs...'.ljust(20) + poggers_bar(.8, 30), end='', flush=True)
     yield profile.use_signing()
-    print('\rStarting: starting...'.ljust(50), end='', flush=True)
+    print('\rStarting: starting...'.ljust(20) + poggers_bar(1, 30), end='', flush=True)
     factory = FactoryO(profile)
-    print('\rConnecting...'.ljust(50), flush=True)
+    print('\rConnecting...'.ljust(60), flush=True)
     factory.connect(args.host, args.port)
 
 

@@ -51,7 +51,7 @@ class ProtocolO(ClientProtocol):
                    'entity_velocity', 'entity_relative_move', 'entity_metadata',
                    'entity_teleport', 'entity_properties', 'entity_look',
                    'entity_equipment', 'spawn_mob', 'destroy_entities', 'effect',
-                   'sound_effect', 'chat_message']
+                   'sound_effect']
         if name in EXCLUDE + self.seen_types:
             buff.discard()
             return
@@ -105,16 +105,16 @@ class FactoryO(ClientFactory):
 
 @defer.inlineCallbacks
 def go(args):
-    print('\rStarting: logging in 1 of 2...'.ljust(75), end='', flush=True)
+    print('\rStarting: logging in...'.ljust(75), end='', flush=True)
     login_token, uuid, name = login()
     print(f'\rtoken = {login_token[:10]}...'.ljust(75), end='', flush=True)
-    print('\rStarting: logging in 2 of 2...'.ljust(75), end='', flush=True)
+    print('\rStarting: building profile...'.ljust(75), end='', flush=True)
     profile: Profile = yield Profile("foo", login_token, name, UUID.from_hex(uuid))
-    print('\rStarting: get certificates...'.ljust(75), end='', flush=True)
-    certs = yield profile.use_signing()
-    print('\rStarting: building factory...'.ljust(75), end='', flush=True)
+    print('\rStarting: retreving certs...'.ljust(75), end='', flush=True)
+    yield profile.use_signing()
+    print('\rStarting: starting...'.ljust(75), end='', flush=True)
     factory = FactoryO(profile)
-    print('\rConnecting...', flush=True)
+    print('\rConnecting...'.ljust(75), flush=True)
     factory.connect(args.host, args.port)
 
 

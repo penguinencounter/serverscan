@@ -1,0 +1,81 @@
+From 87117b951555f8b736418362a3ecdcfffdbdf85a Mon Sep 17 00:00:00 2001
+From: PenguinEncounter <49845522+penguinencounter@users.noreply.github.com>
+Date: Thu, 1 Dec 2022 17:22:05 +0000
+Subject: [PATCH] Various bug fixes: + Fix names of keys in Mojang response
+ data + Fix parsing ISO dates, integer timestamps + Use bytes for certificates
+ instead of str, convert if needed
+
+---
+ quarry/net/auth.py          |  4 ++--
+ quarry/net/client.py        |  2 +-
+ quarry/types/certificate.py | 23 +++++++++++++++++------
+ 3 files changed, 20 insertions(+), 9 deletions(-)
+
+diff --git a/quarry/net/auth.py b/quarry/net/auth.py
+index 59edcf9..ab9dc48 100644
+--- a/quarry/net/auth.py
++++ b/quarry/net/auth.py
+@@ -83,8 +83,8 @@ class Profile(object):
+ 
+         def _callback(data):
+             keyPair = data["keyPair"]
+-            d0.callback(CertificatePair(keyPair["privateKey"], keyPair["publicKey"], data["publicSignature1"],
+-                                        data["publicSignature2"], data["expiresAt"]))
++            d0.callback(CertificatePair(keyPair["privateKey"], keyPair["publicKey"], data["publicKeySignature"],
++                                        data["publicKeySignatureV2"], data["expiresAt"]))
+ 
+         # TODO "post" is to force http.request to send a POST request, which shouldn't be required
+         d1 = self._request_services(b"player/certificates", post=True)
+diff --git a/quarry/net/client.py b/quarry/net/client.py
+index 7dc40ae..d66a1c2 100644
+--- a/quarry/net/client.py
++++ b/quarry/net/client.py
+@@ -48,7 +48,7 @@ class ClientProtocol(Protocol):
+             if can_use_signing_data:
+                 cert = profile.certificates
+                 signature += [
+-                    self.buff_type.pack("l", cert.expires.timestamp()),  # Time the certificate expires
++                    self.buff_type.pack("l", int(cert.expires.timestamp())),  # Time the certificate expires
+                     self.buff_type.pack_byte_array(cert.public),  # Public Key (incl. Length)
+                     self.buff_type.pack_byte_array(cert.signature2),  # Signature (incl. Length) TODO Test which signature is correct
+                 ]
+diff --git a/quarry/types/certificate.py b/quarry/types/certificate.py
+index 5fd38a8..79d02a9 100644
+--- a/quarry/types/certificate.py
++++ b/quarry/types/certificate.py
+@@ -1,15 +1,26 @@
+ from datetime import datetime
++import typing
++
++
++def str_bytes(string) -> bytes:
++    if type(string) == str:
++        return bytes(string, encoding="UTF-8")
++    elif type(string) == bytes:
++        return string
++    raise ValueError(f"expected str or bytes, got {type(string)}")
+ 
+ 
+ class CertificatePair(object):
+-    def __init__(self, private: str, public: str, signature1: str, signature2: str, expires: str):
+-        self.private = private
+-        self.public = public
+-        self.signature1 = signature1
+-        self.signature2 = signature2
++    BytesOrStr = typing.Union[str, bytes]
++
++    def __init__(self, private: BytesOrStr, public: BytesOrStr, signature1: BytesOrStr, signature2: BytesOrStr, expires: str):
++        self.private = str_bytes(private)
++        self.public = str_bytes(public)
++        self.signature1 = str_bytes(signature1)
++        self.signature2 = str_bytes(signature2)
+ 
+         # ISO 8601
+-        self.expires = datetime.fromisoformat(expires)
++        self.expires = datetime.fromisoformat(expires.replace('Z', '+00:00'))  # cpython issue #80010
+ 
+     def is_expired(self):
+         return datetime.now() > self.expires
+-- 
+2.34.1
+

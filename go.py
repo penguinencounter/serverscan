@@ -110,6 +110,8 @@ def go(args):
     print(f'\rtoken = {login_token[:10]}...'.ljust(75), end='', flush=True)
     print('\rStarting: logging in 2 of 2...'.ljust(75), end='', flush=True)
     profile: Profile = yield Profile("foo", login_token, name, UUID.from_hex(uuid))
+    print('\rStarting: get certificates...'.ljust(75), end='', flush=True)
+    certs = yield profile.use_signing()
     print('\rStarting: building factory...'.ljust(75), end='', flush=True)
     factory = FactoryO(profile)
     print('\rConnecting...', flush=True)

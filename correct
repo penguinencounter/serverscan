@@ -1,2 +1,2 @@
 export PYTHONPATH=".:quarry:$PYTHONPATH"
-python "$@"
+python3 "$@"

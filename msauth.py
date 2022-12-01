@@ -23,6 +23,9 @@ CAPTURE_RESULTS = []
 @Request.application
 def capture(request):
     global CAPTURE_RESULTS
+    print(request.args)
+    if "code" not in request.args.keys():
+        return Response('Bad request', 400)
     data = {'redirect_url': request.url}
     data.update(request.args)
     CAPTURE_RESULTS.append(data)

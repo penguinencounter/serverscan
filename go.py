@@ -1,5 +1,6 @@
 import argparse
 import logging
+import re
 import time
 import typing
 from collections import defaultdict
@@ -128,11 +129,15 @@ def go(args):
     yield profile.use_signing()
     print("\rPublic key hexdump ======".ljust(60))
     dum = profile.certificates.convert_key(profile.certificates.public)
+    b = ''
     for i, x in enumerate(dum):
         print(f'{x:02x}', end=' ')
+        b += chr(x) if re.match(r'[\x20-\x7e]', chr(x)) else '.'
         if (i + 1) % 16 == 0:
-            print()
-    print(f'\nEnd dump ====== {len(dum)} bytes')
+            print(f' {b}')
+            b = ''
+    print(((16-((i+1)%16)) * '   ') + f' {b}')
+    print(f'End dump ====== {len(dum)} bytes')
     print('\rStarting: starting...'.ljust(20) + poggers_bar(1, 30), end='', flush=True)
     factory = FactoryO(profile)
     print('\rConnecting...'.ljust(60), flush=True)

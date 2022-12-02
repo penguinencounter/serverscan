@@ -31,6 +31,7 @@ class ProtocolO(ClientProtocol):
         super().__init__(factory, remote_addr)
         self.last_tick_time = 0
         self.last_world_age = 0
+        self.total_unprocessed_data_recvd = 0
         self.seen_types = []
 
     def _19_1_send_message(self, message: str):
@@ -47,29 +48,32 @@ class ProtocolO(ClientProtocol):
 
 
     def packet_unhandled(self, buff, name):
-        EXCLUDE = ['entity_look_and_relative_move', 'entity_head_look', 'entity_status',
-                   'entity_velocity', 'entity_relative_move', 'entity_metadata',
-                   'entity_teleport', 'entity_properties', 'entity_look',
-                   'entity_equipment', 'spawn_mob', 'destroy_entities', 'effect',
-                   'sound_effect']
-        if name in EXCLUDE + self.seen_types:
+        # EXCLUDE = ['entity_look_and_relative_move', 'entity_head_look', 'entity_status',
+        #            'entity_velocity', 'entity_relative_move', 'entity_metadata',
+        #            'entity_teleport', 'entity_properties', 'entity_look',
+        #            'entity_equipment', 'spawn_mob', 'destroy_entities', 'effect',
+        #            'sound_effect']
+        EXCLUDE = []
+        size = len(buff.read())
+        self.total_unprocessed_data_recvd += size
+        if name in EXCLUDE:
             buff.discard()
             return
-        self.seen_types.append(name)
-        print(f'test: new packet type \'{name}\'; this one\'s {len(buff.read())} bytes')
-        # self.send_packet("chat_message", self.buff_type.pack_string(f'test: new packet type \'{name}\'; this one\'s {len(buff.read())} bytes'))
+        if name not in self.seen_types:
+            self.seen_types.append(name)
+            print(f'\rNew packet type \'{name}\'; size {size}'.ljust(75), flush=True)
+        print(f'\r\'{name}\'; size {size}'.ljust(75), end='', flush=True)
         buff.discard()
 
     def packet_time_update(self, buff: AnyBuffer):
         _, world_age = buff.unpack('ll')
-        print(world_age)
         rn = time.time()
         dt = rn - self.last_tick_time
         dtk = world_age - self.last_world_age
         if dtk == 0:
             return
         tps = dt / (dtk / 20)
-        print(f'time packet {dtk} on server over {dt:.2f}s about {tps:.1%}')
+        # print(f'time packet {dtk} on server over {dt:.2f}s about {tps:.1%}')
         if tps < 0.9:
             # self.send_packet("chat_message", self.buff_type.pack_string(f'test: Server lagging at {tps:.1%} of normal! (+{dtk} / {dt:.2f}s) '))
             ...
@@ -85,7 +89,7 @@ class ProtocolO(ClientProtocol):
         health = buff.unpack('f')
         food = buff.unpack_varint()
         sat = buff.unpack('f')
-        print(f'update_health {health} hp {food} food + {sat} sat')
+        print(f'\rI now have {health} health, {food} food, and {sat} saturation'.ljust(75), flush=True)
         if health <= 0:
             self.do_respawn()
         buff.discard()

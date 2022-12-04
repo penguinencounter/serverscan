@@ -2,8 +2,10 @@ import argparse
 import logging
 import re
 import time
+import traceback
 import typing
 from collections import defaultdict
+from types import TracebackType
 
 import quarry.net.ticker
 from quarry.net.auth import Profile
@@ -121,27 +123,35 @@ def poggers_bar(pct, width):
 
 @defer.inlineCallbacks
 def go(args):
-    print('\rLogging in...'.ljust(20) + poggers_bar(.2, 30), end='', flush=True)
-    login_token, uuid, name = login()
-    print('\rBuilding profile...'.ljust(20) + poggers_bar(.4, 30), end='', flush=True)
-    profile: Profile = yield Profile("foo", login_token, name, UUID.from_hex(uuid))
-    print('\rRetreving certs...'.ljust(20) + poggers_bar(.8, 30), end='', flush=True)
-    yield profile.use_signing()
-    print("\rPublic key hexdump ======".ljust(60))
-    dum = profile.certificates.convert_key(profile.certificates.public)
-    b = ''
-    for i, x in enumerate(dum):
-        print(f'{x:02x}', end=' ')
-        b += chr(x) if re.match(r'[\x20-\x7e]', chr(x)) else '.'
-        if (i + 1) % 16 == 0:
-            print(f' {b}')
-            b = ''
-    print(((16-((i+1)%16)) * '   ') + f' {b}')
-    print(f'End dump ====== {len(dum)} bytes')
-    print('\rStarting: starting...'.ljust(20) + poggers_bar(1, 30), end='', flush=True)
-    factory = FactoryO(profile)
-    print('\rConnecting...'.ljust(60), flush=True)
-    factory.connect(args.host, args.port)
+    try:
+        print('\rLogging in...'.ljust(20) + poggers_bar(.2, 30), end='', flush=True)
+        login_token, uuid, name = login()
+        print('\rBuilding profile...'.ljust(20) + poggers_bar(.4, 30), end='', flush=True)
+        profile: Profile = yield Profile("foo", login_token, name, UUID.from_hex(uuid))
+        print('\rRetreving certs...'.ljust(20) + poggers_bar(.8, 30), end='', flush=True)
+        yield profile.use_signing()
+        print('\rConverting...'.ljust(20) + poggers_bar(.9, 30), end='', flush=True)
+        dum = profile.certificates.convert_public_key(profile.certificates.public)
+
+        print("\rPublic key hexdump ======".ljust(60))
+
+        b = ''
+        for i, x in enumerate(dum):
+            print(f'{x:02x}', end=' ')
+            b += chr(x) if re.match(r'[\x20-\x7e]', chr(x)) else '.'
+            if (i + 1) % 16 == 0:
+                print(f' {b}')
+                b = ''
+        print(((16-((i+1)%16)) * '   ') + f' {b}')
+        print(f'End dump ====== {len(dum)} bytes')
+        print('\rStarting: starting...'.ljust(20) + poggers_bar(1, 30), end='', flush=True)
+        factory = FactoryO(profile)
+        print('\rConnecting...'.ljust(60), flush=True)
+        factory.connect(args.host, args.port)
+    except Exception as e:
+        print('\n\n' + '= ERROR =' * 20 + '\nOh noes!!')
+        print(f'message >>> {e}')
+        print(traceback.format_exc())
 
 
 def main(argv):
